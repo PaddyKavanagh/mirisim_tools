@@ -328,7 +328,7 @@ def get_output_product(product, channel=None, dither=False):
 
 def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_readmodes=False,
                  mrs=False, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
-                 mrs_readmodes=False, lrs=True, lrs_slits=False, lrs_readmodes=False,
+                 mrs_readmodes=False, lrs=False, lrs_slits=False, lrs_readmodes=False,
                  dither=False, scene='point'):
     """
     Run functional tests on MIRISim based on user supplied options.
@@ -385,6 +385,12 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
     except: pass
     os.mkdir(out_dir)
 
+    # set the output figure directory
+    out_fig_dir = os.path.join(cwd,'mirisim_functional_tests','simulation_plots')
+    try: shutil.rmtree(out_fig_dir)
+    except: pass
+    os.mkdir(out_fig_dir)
+
     # move to out_dir
     os.chdir(out_dir)
 
@@ -429,6 +435,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
             for im_filter in im_filters:
                 for read_mode in read_modes:
                     sim_dir = 'IMA_' + mode + '_' + im_filter + '_' + read_mode + '_dithering-' + str(dither)
+                    sim_fig = 'IMA_' + mode + '_' + im_filter + '_' + read_mode + '_dithering-' + str(dither) + '.pdf'
                     os.mkdir(sim_dir)
                     os.chdir(sim_dir)
 
@@ -450,40 +457,52 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                         # log pass
                         testing_logger.info('%s passed' % sim_dir)
 
+                        if dither == False:
+                            fig,axs = plt.subplots(1, 2)
+                            fig.set_figwidth(12.0)
+                            fig.set_figheight(6.0)
+                        elif dither == True:
+                            fig,axs = plt.subplots(1, 3)
+                            fig.set_figwidth(12.0)
+                            fig.set_figheight(4.0)
+                        #plt.tight_layout(pad=0.5)
+                        axs = axs.ravel()
+                        axs_index = -1
+
                         # plot output, illumination model and last frame of first integration (only one per exposure)
-                        #illum_file = get_output_product('illum')
-                        #illum_datamodel = miri_illumination_model.MiriIlluminationModel(illum_file)
+                        illum_file = get_output_product('illum')
+                        illum_datamodel = miri_illumination_model.MiriIlluminationModel(illum_file)
 
-                        #axs_index += 1
-                        #axs[axs_index].imshow(illum_datamodel.intensity[0], cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
-                        #axs[axs_index].annotate(sim_dir, xy=(0.0,1.02), xycoords='axes fraction', fontsize=14, fontweight='bold', color='k')
-                        #axs[axs_index].annotate('illum_model', xy=(0.7,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
+                        axs_index += 1
+                        axs[axs_index].imshow(illum_datamodel.intensity[0], cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
+                        axs[axs_index].annotate(sim_dir, xy=(0.0,1.02), xycoords='axes fraction', fontsize=14, fontweight='bold', color='k')
+                        axs[axs_index].annotate('illum_model', xy=(0.7,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
 
-                        #det_file = get_output_product('det_image')
-                        #det_datamodel = datamodels.open(det_file)
+                        det_file = get_output_product('det_image')
+                        det_datamodel = datamodels.open(det_file)
 
-                        #axs_index += 1
-                        #vmax = image_stats(det_datamodel.data[0][-1], 'mean')  + 1000.
-                        #axs[axs_index].imshow(det_datamodel.data[0][-1], cmap='jet', interpolation='nearest', norm=LogNorm(vmin=10000., vmax=vmax), origin='lower')
-                        #axs[axs_index].annotate('det_image', xy=(0.7,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
+                        axs_index += 1
+                        axs[axs_index].imshow(det_datamodel.data[0][-1], cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
+                        axs[axs_index].annotate('det_image', xy=(0.7,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
 
-                        #if dither == True:
-                        #    illum_file = get_output_product('illum', dither=True)
-                        #    illum_datamodel = miri_illumination_model.MiriIlluminationModel(illum_file)
+                        if dither == True:
+                            illum_file = get_output_product('illum', dither=True)
+                            illum_datamodel = miri_illumination_model.MiriIlluminationModel(illum_file)
 
-                        #    axs_index += 1
-                        #    axs[axs_index].imshow(illum_datamodel.intensity[0], cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
-                        #    axs[axs_index].annotate('dither position 2', xy=(0.0,1.02), xycoords='axes fraction', fontsize=12, fontweight='bold', color='k')
-                        #    axs[axs_index].annotate('illum_model', xy=(0.7,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
+                            axs_index += 1
+                            axs[axs_index].imshow(illum_datamodel.intensity[0], cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
+                            axs[axs_index].annotate('dither position 2', xy=(0.0,1.02), xycoords='axes fraction', fontsize=12, fontweight='bold', color='k')
+                            axs[axs_index].annotate('illum_model', xy=(0.7,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
 
-                        #    det_file = get_output_product('det_image', dither=True)
-                        #    det_datamodel = datamodels.open(det_file)
+                            det_file = get_output_product('det_image', dither=True)
+                            det_datamodel = datamodels.open(det_file)
 
-                        #    axs_index += 1
-                        #    vmax = image_stats(det_datamodel.data[0][-1], 'mean')  + 1000.
-                        #    axs[axs_index].imshow(det_datamodel.data[0][-1], cmap='jet', interpolation='nearest', norm=LogNorm(vmin=10000., vmax=vmax), origin='lower')
-                        #    axs[axs_index].annotate('det_image', xy=(0.7,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
+                            axs_index += 1
+                            axs[axs_index].imshow(det_datamodel.data[0][-1], cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
+                            axs[axs_index].annotate('det_image', xy=(0.7,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
 
+                        fig.savefig(os.path.join(out_fig_dir,sim_fig), dpi=200)
+                        del fig
 
                     except Exception as e:
                         testing_logger.warning('%s failed' % sim_dir)
@@ -491,8 +510,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 
                     os.chdir(out_dir)
 
-        #fig.savefig('test_MIRISim_IMA_output.pdf', dpi=200)
-        #del fig
+
 
 
     # MRS simulations
@@ -776,4 +794,4 @@ if __name__ == "__main__":
     break_mirisim(imager=True, ima_filters=False, ima_subarrays=False, ima_readmodes=True,
                  mrs=False, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
                  mrs_readmodes=False, lrs=False, lrs_slits=False, lrs_readmodes=False,
-                 dither=False, scene='grid')
+                 dither=False, scene='point')
