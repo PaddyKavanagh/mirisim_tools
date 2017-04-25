@@ -26,6 +26,7 @@ import numpy as np
 
 from mirisim.config_parser import *
 from mirisim import MiriSimulation
+from mirisim.skysim import *
 from miri.datamodels import miri_illumination_model
 from jwst import datamodels
 
@@ -140,7 +141,7 @@ def make_scene_config(sky='simple', instrument='IMA', src_type='point'):
                 # create config object
                 scene_config = SceneConfig.makeScene(loglevel=0, background=background, targets=targets)
 
-        elif sky == 'grid'
+        elif sky == 'grid':
                 #build scene
                 background = Background(level='low', gradient=5., pa=15.0, centreFOV=(0., 0.))
                 SED_bright = BBSed(Temp=300., wref=10., flux=5.e4)
@@ -153,7 +154,7 @@ def make_scene_config(sky='simple', instrument='IMA', src_type='point'):
                 Point3 = Point(Cen=(10.,-10.), vel=0.0)
                 Point3.set_SED(SED_faint)
                 Point4 = Point(Cen=(-10.,0.), vel=0.0)
-                Point5.set_SED(SED_faint)
+                Point4.set_SED(SED_faint)
                 Point5 = Point(Cen=(0.,0.), vel=0.0)
                 Point5.set_SED(SED_bright)
                 Point6 = Point(Cen=(10.,0.), vel=0.0)
@@ -228,7 +229,7 @@ def make_scene_config(sky='simple', instrument='IMA', src_type='point'):
                 # create config object
                 scene_config = SceneConfig.makeScene(loglevel=0, background=background, targets=targets)
 
-        elif sky == 'grid'
+        elif sky == 'grid':
                 #build scene
                 background = Background(level='low', gradient=5., pa=15.0, centreFOV=(0., 0.))
                 SED_bright = BBSed(Temp=300., wref=10., flux=5.e5)
@@ -437,11 +438,11 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                         scene_cfg = make_scene_config(sky='grid', instrument='IMA', src_type='point')
 
                     sim_cfg = make_ima_sim_config(mode=mode, dither=dither, ndither=ndither,
-                                                    im_filter=im_filter,readmode=read_modes,
+                                                    im_filter=im_filter,readmode=read_mode,
                                                     exposures=exposures, integrations=integrations,
-                                                    groups=groups):
+                                                    groups=groups)
 
-                    print 'Simulating %s' % sim_dir
+                    print('Simulating %s' % sim_dir)
                     try:
                         mysim = MiriSimulation(sim_cfg, scene_cfg, simulator_cfg)
                         mysim.run()
@@ -559,7 +560,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                                 readmode= read_mode, mrs_detector=detector, exposures=exposures,
                                 integrations=integrations, groups=groups)
 
-                        print 'Simulating %s' % sim_dir
+                        'Simulating %s' % sim_dir
                         try:
                             mysim = MiriSimulation.from_configfiles('mrs_simulation.ini', scene_file='test_scene.ini')
                             mysim.run()
@@ -714,7 +715,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                                                 ndither=ndither, readmode=read_mode, exposures=exposures,
                                                 integrations=integrations, groups=groups)
 
-                    print 'Simulating %s' % sim_dir
+                    print('Simulating %s') % sim_dir
                     try:
                         mysim = MiriSimulation.from_configfiles('lrs_simulation.ini', scene_file='test_scene.ini')
                         mysim.run()
@@ -772,7 +773,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 
 if __name__ == "__main__":
 
-    test_mirisim(imager=True, ima_filters=False, ima_subarrays=False, ima_readmodes=True,
+    break_mirisim(imager=True, ima_filters=False, ima_subarrays=False, ima_readmodes=True,
                  mrs=False, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
                  mrs_readmodes=False, lrs=False, lrs_slits=False, lrs_readmodes=False,
-                 dither=False, scene='point')
+                 dither=False, scene='grid')
