@@ -416,7 +416,9 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
     working directory and named according to the simulation parameters.
 
     A testing log file is saved in test_MIRISim.log, which lists which simulations
-    have passed or failed.
+    have passed or failed (and the reason why they failed). Another folder
+    called simulation_plots is created which contains plots of skycubes (for MRS),
+    illum_models and det_images for each simulation.
 
     Parameters:
         ----------------------------------------------------------------------
@@ -442,18 +444,25 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 
         ----------------------------------------------------------------------
 
+        lrs             --  run LRS simulations
+
+        lrs_slits       --  test LRS slit and slitless. If False, defaults to 'SLIT
+
+        lrs_readmodes   --  test LRS readmodes. If False, defaults to FAST
+
+        ----------------------------------------------------------------------
+
         dither              --  if True, performs two point dither for all
                                 simulations
 
-        include_galaxies    --  if True, includes a galaxy at 0,0 in scene,ini
-                                files
-
         scene               --  specifies the type of scene. Options are
-                                'point','galaxy', and 'grid'
+                                'simple' (single source) and 'grid' (grid of sources)
 
     Returns:
         A folder named 'mirisim_functional_testing' containing simulation
-        output and the testing log file test_MIRISim.log
+        output, the testing log file test_MIRISim.log, and the simulation_plots
+        folder containing plots of skycubes (MRS only), illum_models, and det_images
+        for each simulation.
     """
     # set cwd
     cwd = os.getcwd()
@@ -866,6 +875,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 
 if __name__ == "__main__":
 
+    #TODO add command line parser
     break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_readmodes=False,
                  mrs=False, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
                  mrs_readmodes=False, lrs=True, lrs_slits=True, lrs_readmodes=True,
