@@ -30,7 +30,7 @@ from mirisim.skysim import *
 from miri.datamodels import miri_illumination_model
 from jwst import datamodels
 
-def make_ima_sim_config(mode='FULL', dither=False, ndither=2, im_filter='F1130W',
+def make_ima_sim_config(mode='FULL', dither=False, ndither=2, filter='F1130W',
                         readmode= 'FAST', exposures=1, integrations=5, groups=10):
 
     cfg_path = 'IMA_' + mode
@@ -44,7 +44,7 @@ def make_ima_sim_config(mode='FULL', dither=False, ndither=2, im_filter='F1130W'
                                    StartInd=1,
                                    NDither=ndither,
                                    DitherPat="ima_recommended_dither.dat",
-                                   filter=im_filter,
+                                   filter=filter,
                                    readDetect= mode,
                                    ima_mode= readmode,
                                    ima_exposures=exposures,
@@ -91,13 +91,42 @@ def make_mrs_sim_config(mode='1SHORT', dither=False, ndither=2, grating='SHORT',
     return sim_config
 
 
+def make_lrs_sim_config(mode='SLIT', dither=False, ndither=2, filter='P750L',
+                        readmode= 'FAST', exposures=1, integrations=5, groups=10):
+
+    cfg_path = 'LRS_' + mode
+
+    sim_config = SimConfig.makeSim(name="IMA Simulation",
+                                   rel_obsdate=0.0,
+                                   scene="scene.ini",
+                                   POP='IMA',
+                                   ConfigPath=cfg_path,
+                                   Dither=dither,
+                                   StartInd=1,
+                                   NDither=ndither,
+                                   DitherPat="lrs_recommended_dither.dat",
+                                   filter=filter,
+                                   readDetect= 'FULL',
+                                   ima_mode= readmode,
+                                   ima_exposures=exposures,
+                                   ima_integrations=integrations,
+                                   ima_frames=groups,
+                                   disperser= 'SHORT',
+                                   detector= 'BOTH',
+                                   mrs_mode= 'SLOW',
+                                   mrs_exposures=1,
+                                   mrs_integrations=1,
+                                   mrs_frames=20)
+
+    return sim_config
+
 
 def make_scene_config(sky='simple', instrument='IMA', src_type='point'):
     """
     Make a scene config object. Only makes specific types of scenes.
 
     sky = 'grid':
-    Creates a 5x5 (imager) or 3x3 (MRS) grid of point sources, centred on 0,0
+    Creates a 5x5 (imager) or 3x3 (MRS, LRS) grid of point sources, centred on 0,0
     and an optional galaxy at the centre. The sources are spaced at 10" for
     the imager and 1" for the MRS
 
@@ -234,6 +263,60 @@ def make_scene_config(sky='simple', instrument='IMA', src_type='point'):
                 background = Background(level='low', gradient=5., pa=15.0, centreFOV=(0., 0.))
                 SED_bright = BBSed(Temp=300., wref=10., flux=5.e5)
                 SED_faint = BBSed(Temp=300., wref=10., flux=1.e5)
+
+                Point1 = Point(Cen=(-1.,-1.), vel=0.0)
+                Point1.set_SED(SED_faint)
+                Point2 = Point(Cen=(0.,-1.), vel=0.0)
+                Point2.set_SED(SED_faint)
+                Point3 = Point(Cen=(1.,-1.), vel=0.0)
+                Point3.set_SED(SED_faint)
+                Point4 = Point(Cen=(-1.,0.), vel=0.0)
+                Point5.set_SED(SED_faint)
+                Point5 = Point(Cen=(0.,0.), vel=0.0)
+                Point5.set_SED(SED_bright)
+                Point6 = Point(Cen=(1.,0.), vel=0.0)
+                Point6.set_SED(SED_faint)
+                Point7 = Point(Cen=(-1.,1.), vel=0.0)
+                Point7.set_SED(SED_faint)
+                Point8 = Point(Cen=(0.,1.), vel=0.0)
+                Point8.set_SED(SED_faint)
+                Point9 = Point(Cen=(1.,1.), vel=0.0)
+                Point9.set_SED(SED_faint)
+
+                targets = [Point1,Point2,Point3,Point4,Point5,Point6,Point7,Point8,Point9]
+
+                # create config object
+                scene_config = SceneConfig.makeScene(loglevel=0, background=background, targets=targets)
+
+    if instrument == 'LRS':
+        if sky == 'simple':
+            if src_type == 'point':
+                #build scene
+                background = Background(level='low', gradient=5., pa=15.0, centreFOV=(0., 0.))
+                SED1 = BBSed(Temp=300., wref=10., flux=1.e8)
+                Point1 = Point(Cen=(0.,0.), vel=0.0)
+                Point1.set_SED(SED1)
+                targets = [Point1]
+
+                # create config object
+                scene_config = SceneConfig.makeScene(loglevel=0, background=background, targets=targets)
+
+            elif src_type == 'galaxy':
+                #build scene
+                background = Background(level='low', gradient=5., pa=15.0, centreFOV=(0., 0.))
+                SED1 = BBSed(Temp=300., wref=10., flux=1.e6)
+                Galaxy1 = Galaxy(Cen=(0.,0.), vel=0.0)
+                Galaxy1.set_SED(SED1)
+                targets = [Galaxy1]
+
+                # create config object
+                scene_config = SceneConfig.makeScene(loglevel=0, background=background, targets=targets)
+
+        elif sky == 'grid':
+                #build scene
+                background = Background(level='low', gradient=5., pa=15.0, centreFOV=(0., 0.))
+                SED_bright = BBSed(Temp=300., wref=10., flux=5.e6)
+                SED_faint = BBSed(Temp=300., wref=10., flux=1.e6)
 
                 Point1 = Point(Cen=(-1.,-1.), vel=0.0)
                 Point1.set_SED(SED_faint)
@@ -446,7 +529,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                     os.chdir(sim_dir)
 
                     sim_cfg = make_ima_sim_config(mode=mode, dither=dither, ndither=ndither,
-                                                    im_filter=im_filter,readmode=read_mode,
+                                                    filter=im_filter,readmode=read_mode,
                                                     exposures=exposures, integrations=integrations,
                                                     groups=groups)
 
@@ -565,7 +648,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                                                         exposures=exposures, integrations=integrations,
                                                         groups=groups)
 
-                        'Simulating %s' % sim_dir
+                        print('Simulating %s' % sim_dir)
                         try:
                             mysim = MiriSimulation(sim_cfg, scene_cfg, simulator_cfg)
                             mysim.run()
@@ -677,8 +760,8 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
         testing_logger.info('Starting LRS simulations')
 
         if lrs_slits == True:
-            modes = ['LRS_SLIT','LRS_SLITLESS']
-        else: modes = ['LRS_SLIT']  # set as default
+            modes = ['SLIT','SLITLESS']
+        else: modes = ['SLIT']  # set as default
 
         lrs_filters = ['P750L']  # only 1 available
 
@@ -690,60 +773,59 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
         ndither = 2
         exposures=1
         integrations=1
-        groups=20
 
-        # set up pyplot for the imager simulations
-        # need to know the number of rows. The following is a bit messy, can improve
-        # in the future, e.g., using add_subplot
-        if lrs_slits == True:
-            len_modes = len(modes)
-        else: len_modes = 1
-        len_filters = 1
-        if lrs_readmodes == True:
-            len_readmodes = len(read_modes)
-        else: len_readmodes = 1
-
-        # determine the number of plot rows
-        if dither == True: num_rows = len_modes * len_filters * len_readmodes * ndither
-        else: num_rows = len_modes * len_filters * len_readmodes
-
-        # specify the shape of the subplots
-        plot_rows = num_rows
-        plot_cols = 5
-
-        fig,axs = plt.subplots(plot_rows, plot_cols)
-        fig.set_figwidth(10.0)
-        fig.set_figheight(2.0*num_rows)
-        #plt.tight_layout(pad=0.5)
-        axs = axs.ravel()
-        axs_index = -1
+        # make scene (it's ok to use the MRS scene builder here)
+        if scene == 'point':
+            scene_cfg = make_scene_config(sky='simple', instrument='LRS', src_type='point')
+        elif scene == 'grid':
+            scene_cfg = make_scene_config(sky='grid', instrument='LRS', src_type='point')
 
         for mode in modes:
             for lrs_filter in lrs_filters:
                 for read_mode in read_modes:
-                    sim_dir = 'LRS' + mode + '_' + lrs_filter + '_' + read_mode + '_dithering-' + str(dither)
+
+                    # set the number of groups depending on the readout mode
+                    if read_mode == 'FAST': groups=50
+                    elif read_mode == 'SLOW': groups=10
+
+                    sim_dir = 'LRS_' + mode + '_' + lrs_filter + '_' + read_mode + '_dithering-' + str(dither)
+                    sim_fig = 'LRS_' + mode + '_' + lrs_filter + '_' + read_mode + '_dithering-' + str(dither) + '.pdf'
                     os.mkdir(sim_dir)
                     os.chdir(sim_dir)
-                    generate_test_scene(output_scene='test_scene.ini', instrument='LRS',
-                                        include_galaxy=include_galaxy, simple_scene=simple_scene)
-                    generate_lrs_simulation_ini(scene='test_scene.ini', mode=mode, dither=dither,
-                                                ndither=ndither, readmode=read_mode, exposures=exposures,
-                                                integrations=integrations, groups=groups)
 
-                    print('Simulating %s') % sim_dir
+                    print(sim_dir)
+
+                    sim_cfg = make_lrs_sim_config(mode=mode, dither=dither, ndither=ndither,
+                                                    filter=lrs_filter,readmode=read_mode,
+                                                    exposures=exposures, integrations=integrations,
+                                                    groups=groups)
+
+                    print('Simulating %s' % sim_dir)
                     try:
-                        mysim = MiriSimulation.from_configfiles('lrs_simulation.ini', scene_file='test_scene.ini')
+                        mysim = MiriSimulation(sim_cfg, scene_cfg, simulator_cfg)
                         mysim.run()
 
                         # log pass
                         testing_logger.info('%s passed' % sim_dir)
+
+                        if dither == False:
+                            fig,axs = plt.subplots(1, 2)
+                            fig.set_figwidth(12.0)
+                            fig.set_figheight(6.0)
+                        elif dither == True:
+                            fig,axs = plt.subplots(2,2)
+                            fig.set_figwidth(12.0)
+                            fig.set_figheight(12.0)
+                        #plt.tight_layout(pad=0.5)
+                        axs = axs.ravel()
+                        axs_index = -1
 
                         # plot output, illumination model and last frame of first integration (only one per exposure)
                         illum_file = get_output_product('illum')
                         illum_datamodel = miri_illumination_model.MiriIlluminationModel(illum_file)
 
                         axs_index += 1
-                        axs[axs_index].imshow(illum_datamodel.intensity[0], cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
+                        axs[axs_index].imshow(illum_datamodel.intensity, cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
                         axs[axs_index].annotate(sim_dir, xy=(0.0,1.02), xycoords='axes fraction', fontsize=14, fontweight='bold', color='k')
                         axs[axs_index].annotate('illum_model', xy=(0.7,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
 
@@ -751,8 +833,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                         det_datamodel = datamodels.open(det_file)
 
                         axs_index += 1
-                        vmax = image_stats(det_datamodel.data[0][-1], 'mean')  + 1000.
-                        axs[axs_index].imshow(det_datamodel.data[0][-1], cmap='jet', interpolation='nearest', norm=LogNorm(vmin=10000., vmax=vmax), origin='lower')
+                        axs[axs_index].imshow(det_datamodel.data[0][-1], cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
                         axs[axs_index].annotate('det_image', xy=(0.7,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
 
                         if dither == True:
@@ -760,7 +841,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                             illum_datamodel = miri_illumination_model.MiriIlluminationModel(illum_file)
 
                             axs_index += 1
-                            axs[axs_index].imshow(illum_datamodel.intensity[0], cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
+                            axs[axs_index].imshow(illum_datamodel.intensity, cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
                             axs[axs_index].annotate('dither position 2', xy=(0.0,1.02), xycoords='axes fraction', fontsize=12, fontweight='bold', color='k')
                             axs[axs_index].annotate('illum_model', xy=(0.7,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
 
@@ -768,10 +849,11 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                             det_datamodel = datamodels.open(det_file)
 
                             axs_index += 1
-                            vmax = image_stats(det_datamodel.data[0][-1], 'mean')  + 1000.
-                            axs[axs_index].imshow(det_datamodel.data[0][-1], cmap='jet', interpolation='nearest', norm=LogNorm(vmin=10000., vmax=vmax), origin='lower')
+                            axs[axs_index].imshow(det_datamodel.data[0][-1], cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
                             axs[axs_index].annotate('det_image', xy=(0.7,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
 
+                        fig.savefig(os.path.join(out_fig_dir,sim_fig), dpi=200)
+                        del fig
 
                     except Exception as e:
                         testing_logger.warning('%s failed' % sim_dir)
@@ -779,16 +861,12 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 
                     os.chdir(out_dir)
 
-        fig.savefig('test_MIRISim_LRS_output.pdf', dpi=200)
-        del fig
-
-
     os.chdir(cwd)
 
 
 if __name__ == "__main__":
 
     break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_readmodes=False,
-                 mrs=True, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
-                 mrs_readmodes=True, lrs=False, lrs_slits=False, lrs_readmodes=False,
-                 dither=True, scene='point')
+                 mrs=False, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
+                 mrs_readmodes=False, lrs=True, lrs_slits=True, lrs_readmodes=True,
+                 dither=False, scene='point')
