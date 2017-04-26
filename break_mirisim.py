@@ -280,11 +280,7 @@ def get_output_product(product, channel=None, dither=False):
         product_path    --  path to the output product
 
     ----------------------------------------------------------------------
-    DEV: this function can certainly be made more elegant
     """
-    # check product type is valid
-    assert product in ['illum','det_image','skycube'], 'Product type not recognised'
-
     # determine name of simulation folder
     sim_dir = glob.glob('2*')[0]
 
@@ -429,11 +425,15 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
         ndither = 2
         exposures=1
         integrations=1
-        groups=20
 
         for mode in modes:
             for im_filter in im_filters:
                 for read_mode in read_modes:
+
+                    # set the number of groups depending on the readout mode
+                    if read_mode == 'FAST': groups=50
+                    elif read_mode == 'SLOW': groups=10
+
                     sim_dir = 'IMA_' + mode + '_' + im_filter + '_' + read_mode + '_dithering-' + str(dither)
                     sim_fig = 'IMA_' + mode + '_' + im_filter + '_' + read_mode + '_dithering-' + str(dither) + '.pdf'
                     os.mkdir(sim_dir)
@@ -462,9 +462,9 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                             fig.set_figwidth(12.0)
                             fig.set_figheight(6.0)
                         elif dither == True:
-                            fig,axs = plt.subplots(1, 3)
+                            fig,axs = plt.subplots(2,2)
                             fig.set_figwidth(12.0)
-                            fig.set_figheight(4.0)
+                            fig.set_figheight(12.0)
                         #plt.tight_layout(pad=0.5)
                         axs = axs.ravel()
                         axs_index = -1
@@ -794,4 +794,4 @@ if __name__ == "__main__":
     break_mirisim(imager=True, ima_filters=False, ima_subarrays=False, ima_readmodes=True,
                  mrs=False, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
                  mrs_readmodes=False, lrs=False, lrs_slits=False, lrs_readmodes=False,
-                 dither=False, scene='point')
+                 dither=True, scene='point')
