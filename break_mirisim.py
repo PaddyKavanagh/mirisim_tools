@@ -76,7 +76,7 @@ def make_mrs_sim_config(mode='1SHORT', dither=False, ndither=2, grating='SHORT',
                                    NDither=ndither,
                                    DitherPat="mrs_recommended_dither.dat",
                                    filter='F1130W',
-                                   readDetect= mode,
+                                   readDetect= 'FULL',
                                    ima_mode= 'FAST',
                                    ima_exposures=1,
                                    ima_integrations=1,
@@ -426,6 +426,12 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
         exposures=1
         integrations=1
 
+        if scene == 'point':
+            scene_cfg = make_scene_config(sky='simple', instrument='IMA', src_type='point')
+        elif scene == 'grid':
+            scene_cfg = make_scene_config(sky='grid', instrument='IMA', src_type='point')
+
+
         for mode in modes:
             for im_filter in im_filters:
                 for read_mode in read_modes:
@@ -438,11 +444,6 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                     sim_fig = 'IMA_' + mode + '_' + im_filter + '_' + read_mode + '_dithering-' + str(dither) + '.pdf'
                     os.mkdir(sim_dir)
                     os.chdir(sim_dir)
-
-                    if scene == 'point':
-                        scene_cfg = make_scene_config(sky='simple', instrument='IMA', src_type='point')
-                    elif scene == 'grid':
-                        scene_cfg = make_scene_config(sky='grid', instrument='IMA', src_type='point')
 
                     sim_cfg = make_ima_sim_config(mode=mode, dither=dither, ndither=ndither,
                                                     im_filter=im_filter,readmode=read_mode,
@@ -539,52 +540,50 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
         ndither = 2
         exposures=1
         integrations=1
-        groups=20
 
-        # set up pyplot for the imager simulations
-        # need to know the number of rows. The following is a bit messy, can improve
-        # in the future, e.g., using add_subplot
-        len_modes = len(modes)
-        len_dispersers = len(dispersers)
-        len_detectors = len(detectors)
-        len_read_modes = len(read_modes)
-
-        # determine the number of plot rows
-        if dither == True: num_rows = len_modes * len_dispersers * len_detectors * len_read_modes * ndither
-        else: num_rows = len_modes * len_dispersers * len_detectors * len_read_modes
-
-        # specify the shape of the subplots
-        plot_rows = num_rows
-        plot_cols = 4
-
-        fig,axs = plt.subplots(plot_rows, plot_cols)
-        fig.set_figwidth(12.0)
-        fig.set_figheight(2.5*num_rows)
-        plt.tight_layout(pad=0.5)
-        axs = axs.ravel()
-        axs_index = -1
+        if scene == 'point':
+            scene_cfg = make_scene_config(sky='simple', instrument='MRS', src_type='point')
+        elif scene == 'grid':
+            scene_cfg = make_scene_config(sky='grid', instrument='MRS', src_type='point')
 
         for mode in modes:
             for disperser in dispersers:
                 for detector in detectors:
                     for read_mode in read_modes:
+
+                        # set the number of groups depending on the readout mode
+                        if read_mode == 'FAST': groups=50
+                        elif read_mode == 'SLOW': groups=10
+
                         sim_dir = 'MRS_' + mode + '_' + disperser + '_' + detector + '_' + read_mode + '_dithering-' + str(dither)
+                        sim_fig = 'MRS_' + mode + '_' + disperser + '_' + detector + '_' + read_mode + '_dithering-' + str(dither) + '.pdf'
                         os.mkdir(sim_dir)
                         os.chdir(sim_dir)
-                        generate_test_scene(output_scene='test_scene.ini', instrument='MRS',
-                                            include_galaxy=include_galaxy, simple_scene=simple_scene)
-                        generate_mrs_simulation_ini(scene='test_scene.ini', mode=mode,
-                                dither=dither, ndither=ndither, mrs_grating=disperser,
-                                readmode= read_mode, mrs_detector=detector, exposures=exposures,
-                                integrations=integrations, groups=groups)
+
+                        sim_cfg = make_mrs_sim_config(mode=mode, dither=dither, ndither=ndither,
+                                                        grating=disperser,readmode=read_mode, detector=detector,
+                                                        exposures=exposures, integrations=integrations,
+                                                        groups=groups)
 
                         'Simulating %s' % sim_dir
                         try:
-                            mysim = MiriSimulation.from_configfiles('mrs_simulation.ini', scene_file='test_scene.ini')
+                            mysim = MiriSimulation(sim_cfg, scene_cfg, simulator_cfg)
                             mysim.run()
 
                             # log pass
                             testing_logger.info('%s passed' % sim_dir)
+
+                            if dither == False:
+                                fig,axs = plt.subplots(1, 4)
+                                fig.set_figwidth(16.0)
+                                fig.set_figheight(4.0)
+                            elif dither == True:
+                                fig,axs = plt.subplots(2,4)
+                                fig.set_figwidth(16.0)
+                                fig.set_figheight(8.0)
+                            #plt.tight_layout(pad=0.5)
+                            axs = axs.ravel()
+                            axs_index = -1
 
                             # plot output, skycube, illumination model and last frame of first integration (only one per exposure)
                             # skycube, first channel
@@ -596,7 +595,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                             axs_index += 1
                             axs[axs_index].imshow(np.sum(sky_data, axis=0), cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
                             axs[axs_index].annotate(sim_dir, xy=(0.0,1.02), xycoords='axes fraction', fontsize=14, fontweight='bold', color='k')
-                            axs[axs_index].annotate('skycube low', xy=(0.5,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
+                            axs[axs_index].annotate('skycube short', xy=(0.5,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
 
                             # skycube, second channel
                             cube_file = get_output_product('skycube', channel=2)
@@ -606,7 +605,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 
                             axs_index += 1
                             axs[axs_index].imshow(np.sum(sky_data, axis=0), cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
-                            axs[axs_index].annotate('skycub high', xy=(0.5,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
+                            axs[axs_index].annotate('skycube long', xy=(0.5,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
 
                             # illumination model
                             illum_file = get_output_product('illum')
@@ -621,8 +620,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                             det_datamodel = datamodels.open(det_file)
 
                             axs_index += 1
-                            vmax = image_stats(det_datamodel.data[0][-1], 'mean')  + 5000.
-                            axs[axs_index].imshow(det_datamodel.data[0][-1], cmap='jet', interpolation='nearest', norm=LogNorm(vmin=5000, vmax=vmax), origin='lower')
+                            axs[axs_index].imshow(det_datamodel.data[0][-1], cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
                             axs[axs_index].annotate('det_image', xy=(0.5,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
 
                             if dither == True:
@@ -635,7 +633,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                                 axs_index += 1
                                 axs[axs_index].imshow(np.sum(sky_data, axis=0), cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
                                 axs[axs_index].annotate('dither position 2', xy=(0.0,1.02), xycoords='axes fraction', fontsize=12, fontweight='bold', color='k')
-                                axs[axs_index].annotate('skycube low', xy=(0.5,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
+                                axs[axs_index].annotate('skycube short', xy=(0.5,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
 
                                 # skycube high
                                 cube_file = get_output_product('skycube', channel=2, dither=True)
@@ -645,7 +643,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 
                                 axs_index += 1
                                 axs[axs_index].imshow(np.sum(sky_data, axis=0), cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
-                                axs[axs_index].annotate('skycube high', xy=(0.5,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
+                                axs[axs_index].annotate('skycube long', xy=(0.5,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
 
                                 # illumination model
                                 illum_file = get_output_product('illum', dither=True)
@@ -660,10 +658,11 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                                 det_datamodel = datamodels.open(det_file)
 
                                 axs_index += 1
-                                vmax = image_stats(det_datamodel.data[0][-1], 'mean')  + 5000.
-                                axs[axs_index].imshow(det_datamodel.data[0][-1], cmap='jet', interpolation='nearest', norm=LogNorm(vmin=5000,vmax=vmax), origin='lower')
+                                axs[axs_index].imshow(det_datamodel.data[0][-1], cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
                                 axs[axs_index].annotate('det_image', xy=(0.5,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
 
+                            fig.savefig(os.path.join(out_fig_dir,sim_fig), dpi=200)
+                            del fig
 
                         except Exception as e:
                             testing_logger.warning('%s failed' % sim_dir)
@@ -671,8 +670,6 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 
                         os.chdir(out_dir)
 
-        fig.savefig('test_MIRISim_MRS_output.pdf', dpi=200)
-        del fig
 
 
     # LRS simulations
@@ -791,7 +788,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 
 if __name__ == "__main__":
 
-    break_mirisim(imager=True, ima_filters=False, ima_subarrays=False, ima_readmodes=True,
-                 mrs=False, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
-                 mrs_readmodes=False, lrs=False, lrs_slits=False, lrs_readmodes=False,
+    break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_readmodes=False,
+                 mrs=True, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
+                 mrs_readmodes=True, lrs=False, lrs_slits=False, lrs_readmodes=False,
                  dither=True, scene='point')
