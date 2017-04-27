@@ -32,19 +32,24 @@ import numpy as np
 
 from jwst import datamodels
 
+
 def pipeline_mirisim(input_dir):
     """
 
     """
     # check if the simulation folder exists
     try:
-        with open(filepath) as infile:
+        with open(input_dir) as indir:
             pass
     except IOError:
         print("Simulation folder not found")
 
 
-
+    # go through individual simulations and run through pipeline
+    simulations = glob.glob(os.path.join(input_dir,'IMA*'))
+    simulations.extend(glob.glob(os.path.join(input_dir,'MRS*')))
+    simulations.extend(glob.glob(os.path.join(input_dir,'LRS*')))
+    for simulation in simulations: print(simulation)
 
 if __name__ == "__main__":
 
