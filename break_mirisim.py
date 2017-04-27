@@ -783,7 +783,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
         exposures=1
         integrations=1
 
-        # make scene (it's ok to use the MRS scene builder here)
+        # make scene
         if scene == 'point':
             scene_cfg = make_scene_config(sky='simple', instrument='LRS', src_type='point')
         elif scene == 'grid':
