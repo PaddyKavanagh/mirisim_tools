@@ -603,9 +603,6 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 
                     os.chdir(out_dir)
 
-
-
-
     # MRS simulations
     if mrs == True:
         testing_logger.info('Starting MRS simulations')
@@ -761,8 +758,6 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                             testing_logger.warning('  %s: %s' % (e.__class__.__name__, str(e)))
 
                         os.chdir(out_dir)
-
-
 
     # LRS simulations
     if lrs == True:
