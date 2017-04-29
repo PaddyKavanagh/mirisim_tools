@@ -271,7 +271,7 @@ def make_scene_config(sky='simple', instrument='IMA', src_type='point'):
                 Point3 = Point(Cen=(1.,-1.), vel=0.0)
                 Point3.set_SED(SED_faint)
                 Point4 = Point(Cen=(-1.,0.), vel=0.0)
-                Point5.set_SED(SED_faint)
+                Point4.set_SED(SED_faint)
                 Point5 = Point(Cen=(0.,0.), vel=0.0)
                 Point5.set_SED(SED_bright)
                 Point6 = Point(Cen=(1.,0.), vel=0.0)
@@ -871,7 +871,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 if __name__ == "__main__":
 
     #TODO add command line parser
-    break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_readmodes=False,
-                 mrs=False, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
-                 mrs_readmodes=False, lrs=True, lrs_slits=True, lrs_readmodes=True,
-                 dither=False, scene='point')
+    break_mirisim(imager=True, ima_filters=False, ima_subarrays=False, ima_readmodes=True,
+                 mrs=True, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
+                 mrs_readmodes=True, lrs=True, lrs_slits=False, lrs_readmodes=True,
+                 dither=False, scene='grid')
