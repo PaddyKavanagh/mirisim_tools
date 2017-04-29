@@ -325,7 +325,7 @@ def make_scene_config(sky='simple', instrument='IMA', src_type='point'):
                 Point3 = Point(Cen=(1.,-1.), vel=0.0)
                 Point3.set_SED(SED_faint)
                 Point4 = Point(Cen=(-1.,0.), vel=0.0)
-                Point5.set_SED(SED_faint)
+                Point4.set_SED(SED_faint)
                 Point5 = Point(Cen=(0.,0.), vel=0.0)
                 Point5.set_SED(SED_bright)
                 Point6 = Point(Cen=(1.,0.), vel=0.0)
