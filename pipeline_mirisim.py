@@ -87,6 +87,7 @@ def pipeline_mirisim(input_dir):
             fig.set_figwidth(15.0)
             fig.set_figheight(5.0)
             axs = axs.ravel()
+            # TODO improve colour scales for plots
 
             if level1b_dm.meta.exposure.type == 'MIR_IMAGE':
                 try:
