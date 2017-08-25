@@ -93,7 +93,7 @@ def pipeline_mirisim(input_dir):
 
                     # level2b_dm doesn't contain anything. report on GitHub
                     # for now read from fits file
-                    #level2b_dm = datamodels.open('cal.fits')
+                    level2b_dm = datamodels.open('cal_cal.fits')
 
                     # set up output plots
                     fig,axs = plt.subplots(1, 3)
@@ -132,6 +132,10 @@ def pipeline_mirisim(input_dir):
                 try:
                     level2a_dm = SloperPipeline.call(level1b_dm, output_file='rate.fits')
                     level2b_dm = Spec2Pipeline.call(level2a_dm, output_file='cal.fits')
+
+                    # level2b_dm doesn't contain anything. report on GitHub
+                    # for now read from fits file
+                    level2b_dm = datamodels.open('cal_cal.fits')
 
                     # set up output plots
                     fig,axs = plt.subplots(1, 3)
