@@ -293,7 +293,7 @@ def make_scene_config(sky='simple', instrument='IMA', src_type='point'):
             if src_type == 'point':
                 #build scene
                 background = Background(level='low', gradient=5., pa=15.0, centreFOV=(0., 0.))
-                SED1 = BBSed(Temp=300., wref=10., flux=1.e8)
+                SED1 = BBSed(Temp=300., wref=10., flux=1.e4)
                 Point1 = Point(Cen=(0.,0.), vel=0.0)
                 Point1.set_SED(SED1)
                 targets = [Point1]
@@ -315,8 +315,8 @@ def make_scene_config(sky='simple', instrument='IMA', src_type='point'):
         elif sky == 'grid':
                 #build scene
                 background = Background(level='low', gradient=5., pa=15.0, centreFOV=(0., 0.))
-                SED_bright = BBSed(Temp=300., wref=10., flux=5.e6)
-                SED_faint = BBSed(Temp=300., wref=10., flux=1.e6)
+                SED_bright = BBSed(Temp=300., wref=10., flux=5.e4)
+                SED_faint = BBSed(Temp=300., wref=10., flux=1.e4)
 
                 Point1 = Point(Cen=(-1.,-1.), vel=0.0)
                 Point1.set_SED(SED_faint)
@@ -407,7 +407,7 @@ def get_output_product(product, channel=None, dither=False):
 
 def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_readmodes=False,
                  mrs=False, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
-                 mrs_readmodes=False, lrs=False, lrs_slits=False, lrs_readmodes=False,
+                 mrs_readmodes=False, lrs_slit=False, lrs_slitless=False, lrs_readmodes=False,
                  dither=False, scene='point'):
     """
     Run functional tests on MIRISim based on user supplied options.
@@ -760,12 +760,10 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                         os.chdir(out_dir)
 
     # LRS simulations
-    if lrs == True:
-        testing_logger.info('Starting LRS simulations')
+    if lrs_slit == True:
+        testing_logger.info('Starting LRS-SLIT simulations')
 
-        if lrs_slits == True:
-            modes = ['SLIT','SLITLESS']
-        else: modes = ['SLIT']  # set as default
+        modes = ['SLIT']  # set as default
 
         lrs_filters = ['P750L']  # only 1 available
 
@@ -865,13 +863,97 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 
                     os.chdir(out_dir)
 
+    # LRS simulations
+    if lrs_slitless == True:
+        testing_logger.info('Starting LRS-SLITLESS simulations')
+
+        modes = ['SLITLESS']
+
+        lrs_filters = ['P750L']  # only 1 available
+
+        if lrs_readmodes == True:
+            read_modes = ['FAST', 'SLOW']
+        else: read_modes = ['SLOW']  # set as default
+
+        # set observation parameters (hardcoded for now)
+        ndither = 1
+        exposures=1
+        integrations=9   # make 9 ints for TSO
+
+        # make scene
+        if scene == 'point':
+            scene_cfg = make_scene_config(sky='simple', instrument='LRS', src_type='point')
+        elif scene == 'grid':
+            scene_cfg = make_scene_config(sky='grid', instrument='LRS', src_type='point')
+
+        for mode in modes:
+            for lrs_filter in lrs_filters:
+                for read_mode in read_modes:
+
+                    # set the number of groups depending on the readout mode
+                    if read_mode == 'FAST': groups=40
+                    elif read_mode == 'SLOW': groups=20
+
+                    sim_dir = 'LRS_' + mode + '_' + lrs_filter + '_' + read_mode + '_dithering-' + str(dither)
+                    sim_fig = 'LRS_' + mode + '_' + lrs_filter + '_' + read_mode + '_dithering-' + str(dither) + '.pdf'
+                    os.mkdir(sim_dir)
+                    os.chdir(sim_dir)
+
+                    print(sim_dir)
+
+                    sim_cfg = make_lrs_sim_config(mode=mode, dither=False, ndither=ndither,
+                                                    filter=lrs_filter,readmode=read_mode,
+                                                    exposures=exposures, integrations=integrations,
+                                                    groups=groups)
+
+                    print('Simulating %s' % sim_dir)
+                    try:
+                        mysim = MiriSimulation(sim_cfg, scene_cfg, simulator_cfg)
+                        mysim.run()
+
+                        # log pass
+                        testing_logger.info('%s passed' % sim_dir)
+
+                        fig,axs = plt.subplots(1, 2)
+                        fig.set_figwidth(12.0)
+                        fig.set_figheight(6.0)
+
+                        #plt.tight_layout(pad=0.5)
+                        axs = axs.ravel()
+                        axs_index = -1
+
+                        # plot output, illumination model and last frame of first integration (only one per exposure)
+                        illum_file = get_output_product('illum')
+                        illum_datamodel = miri_illumination_model.MiriIlluminationModel(illum_file)
+
+                        axs_index += 1
+                        axs[axs_index].imshow(illum_datamodel.intensity, cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
+                        axs[axs_index].annotate(sim_dir, xy=(0.0,1.02), xycoords='axes fraction', fontsize=14, fontweight='bold', color='k')
+                        axs[axs_index].annotate('illum_model', xy=(0.7,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
+
+                        det_file = get_output_product('det_image')
+                        det_datamodel = datamodels.open(det_file)
+
+                        axs_index += 1
+                        axs[axs_index].imshow(det_datamodel.data[0][-1], cmap='jet', interpolation='nearest', norm=LogNorm(), origin='lower')
+                        axs[axs_index].annotate('det_image', xy=(0.7,0.95), xycoords='axes fraction', fontsize=10, fontweight='bold', color='w')
+
+                        fig.savefig(os.path.join(out_fig_dir,sim_fig), dpi=200)
+                        del fig
+
+                    except Exception as e:
+                        testing_logger.warning('%s failed' % sim_dir)
+                        testing_logger.warning('  %s: %s' % (e.__class__.__name__, str(e)))
+
+                    os.chdir(out_dir)
+
     os.chdir(cwd)
 
 
 if __name__ == "__main__":
 
     #TODO add command line parser
-    break_mirisim(imager=True, ima_filters=False, ima_subarrays=False, ima_readmodes=True,
-                 mrs=True, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
-                 mrs_readmodes=True, lrs=True, lrs_slits=False, lrs_readmodes=True,
-                 dither=False, scene='grid')
+    break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_readmodes=True,
+                 mrs=False, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
+                 mrs_readmodes=True, lrs_slit=False, lrs_slitless=True, lrs_readmodes=True,
+                 dither=True, scene='point')
