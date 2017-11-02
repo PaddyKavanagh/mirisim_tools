@@ -34,7 +34,7 @@ from astropy.table import Table
 import numpy as np
 
 from jwst import datamodels
-from jwst.pipeline import SloperPipeline
+from jwst.pipeline import Detector1Pipeline
 from jwst.pipeline import Image2Pipeline
 from jwst.pipeline import Image3Pipeline
 from jwst.pipeline import Spec2Pipeline
@@ -103,7 +103,7 @@ def pipeline_mirisim(input_dir):
                 with datamodels.open(f) as level1b_dm:
 
                         try:
-                            level2a_dm = SloperPipeline.call(level1b_dm, save_results=True)
+                            level2a_dm = Detector1Pipeline.call(level1b_dm, save_results=True)
                             Image2Pipeline.call(level2a_dm, save_results=True)
 
                             # log pass
@@ -191,7 +191,7 @@ def pipeline_mirisim(input_dir):
                 with datamodels.open(f) as level1b_dm:
 
                     try:
-                        level2a_dm = SloperPipeline.call(level1b_dm, save_results=True)
+                        level2a_dm = Detector1Pipeline.call(level1b_dm, save_results=True)
                         Spec2Pipeline.call(level2a_dm, save_results=True, steps={'straylight':{'skip':True},
                                                                                   'extract_1d':{'save_results':True}})
 
@@ -307,7 +307,7 @@ def pipeline_mirisim(input_dir):
                 with datamodels.open(f) as level1b_dm:
 
                     try:
-                        level2a_dm = SloperPipeline.call(level1b_dm, save_results=True)
+                        level2a_dm = Detector1Pipeline.call(level1b_dm, save_results=True)
                         Spec2Pipeline.call(level2a_dm, save_results=True, steps={'extract_1d': {'save_results': True}})
 
                         # log pass
@@ -372,11 +372,11 @@ def pipeline_mirisim(input_dir):
                 level1b_dm = datamodels.open(level1b_files[0])
 
                 # correct for the 'SLITLESSPRISM', 'SUBPRISM' conflict
-                if level1b_dm.meta.exposure.type == 'MIR_LRS-SLITLESS':
-                    level1b_dm.meta.subarray.name = 'SUBPRISM'
+                #if level1b_dm.meta.exposure.type == 'MIR_LRS-SLITLESS':
+                #    level1b_dm.meta.subarray.name = 'SUBPRISM'
 
                 try:
-                    SloperPipeline.call(level1b_dm)
+                    Detector1Pipeline.call(level1b_dm)
                     level2a_ints = glob.glob('*rateints.fits')[0]
                     Spec2Pipeline.call(level2a_ints, save_results=True, steps={'extract_1d': {'save_results': True}})
                     level2b_ints = glob.glob('*calints.fits')[0]
