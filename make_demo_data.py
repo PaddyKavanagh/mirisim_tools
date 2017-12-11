@@ -41,7 +41,7 @@ class IMADemoData():
                                                          include_flat=True,include_gain=True,include_nonlinearity=True,
                                                          include_drifts=True,include_latency=True, cosmic_ray_mode='NONE')
 
-        self.ima_scene_config = make_simple_cat_scene_obj(target_coords=[1.0,1.0],random=True, source_num=2000,
+        self.ima_scene_config = make_simple_cat_scene_obj(target_coords=[1.0,1.0],random=True, source_num=100,
                                                     centre_coords=[1.0,1.0])
 
 
@@ -71,8 +71,8 @@ class LRSSlitDemoData():
         setup the MIRISim config objects
         """
         self.lrs_slit_sim_config = SimConfig.makeSim(name="LRS Simulation",rel_obsdate=0.0,scene="scene.ini",
-                                       POP='IMA',ConfigPath='LRS_SLIT',Dither=False, StartInd=1,
-                                       NDither=4,DitherPat="lrs_recommended_dither.dat",filter="P750L",
+                                       POP='IMA',ConfigPath='LRS_SLIT',Dither=True, StartInd=1,
+                                       NDither=2,DitherPat="lrs_recommended_dither.dat",filter="P750L",
                                        readDetect= 'FULL',ima_mode= 'FAST',ima_exposures=1,ima_integrations=2,
                                        ima_frames=50,disperser= 'SHORT',detector= 'SW',mrs_mode= 'SLOW',
                                        mrs_exposures=5,mrs_integrations=4,mrs_frames=10)
@@ -96,24 +96,20 @@ class LRSSlitDemoData():
         # set background
         background = Background(level='low',gradient=5.,pa=15.0,centreFOV=(0., 0.))
 
-        # set SED
-        SED1 = BBSed(Temp=300., wref=10., flux=1.e4)
-        Point1 = Point(Cen=(0.,0.), vel=0.0)
+        SED1 = PLSed(alpha=0.0, wref=10., flux=1.e4)
+        Point1 = Point(Cen=(0., 0.), vel=0.0)
         Point1.set_SED(SED1)
 
-        # set source type and assign SED
-        Point2 = Point(Cen=(0.,0.), vel=0.0)
-        SED2 = LinesSed(wavels=[5,5.4,5.8,6.4,6.7,7.3,7.7,8.4,9,10.1,10.9,11.4,12.4,13.1,14.3,
-                    15.1,16.4,17.2,18.7,19.4,22.4,23.1,25.2,26.7], fluxes=[1e+03,1e+03,1e+03,
-                    1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,
-                    1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03], fwhms=[0.03,0.03,
-                    0.03,0.03,0.03,0.03,0.03,0.001,0.01,0.001,0.007,0.03,0.001,0.006,0.002,0.009,
-                    0.1,0.005,0.001,0.04,0.001,0.006,0.001,0.001])
+        Point2 = Point(Cen=(0., 0.), vel=0.0)
+
+        SED2 = LinesSed(wavels=[6, 7, 8, 9, 10, 11, 12],
+                        fluxes=[5e+03, 4e+03, 3e+03, 3e+03, 3e+03, 3e+03, 3e+03],
+                        fwhms=[0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05])
         Point2.set_SED(SED2)
 
         # set a background SED and object
-        SED3 = BBSed(Temp=300., wref=10., flux=1.e3)
-        Gal1 = Galaxy(Cen=(0.,0.), n=2., re=0.5, q=0.9, pa=0.1)
+        SED3 = BBSed(Temp=300., wref=10., flux=1.e6)
+        Gal1 = Galaxy(Cen=(0.,0.), n=2., re=50, q=0.9, pa=0.1)
         Gal1.set_SED(SED3)
 
         # load point to targets list
@@ -167,7 +163,7 @@ class LRSSlitlessDemoData():
         self.lrs_slitless_sim_config = SimConfig.makeSim(name="LRS Simulation",rel_obsdate=0.0,scene="scene.ini",
                                        POP='IMA',ConfigPath='LRS_SLITLESS',Dither=False,StartInd=0,NDither=2,
                                        DitherPat="lrs_recommended_dither.dat",filter="P750L",readDetect= 'FULL',
-                                       ima_mode= 'FAST',ima_exposures=1,ima_integrations=19,ima_frames=20,
+                                       ima_mode= 'FAST',ima_exposures=3,ima_integrations=20,ima_frames=20,
                                        disperser= 'SHORT',detector= 'SW',mrs_mode= 'SLOW',mrs_exposures=5,
                                        mrs_integrations=4,mrs_frames=10)
 
@@ -195,14 +191,11 @@ class LRSSlitlessDemoData():
 
         bb = BBSed(Temp=300., wref=10., flux=1.e4)
 
-        lines = LinesSed(wavels=[5,5.4,5.8,6.4,6.7,7.3,7.7,8.4,9,10.1,10.9,11.4,12.4,13.1,14.3,
-                    15.1,16.4,17.2,18.7,19.4,22.4,23.1,25.2,26.7], fluxes=[1e+03,1e+03,1e+03,
-                    1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,
-                    1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03], fwhms=[0.03,0.03,
-                    0.03,0.03,0.03,0.03,0.03,0.001,0.01,0.001,0.007,0.03,0.001,0.006,0.002,0.009,
-                    0.1,0.005,0.001,0.04,0.001,0.006,0.001,0.001])
+        lines = LinesSed(wavels=[6, 7, 8, 9, 10, 11, 12],
+                        fluxes=[5e+03, 4e+03, 3e+03, 3e+03, 3e+03, 3e+03, 3e+03],
+                        fwhms=[0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05])
 
-        abs_line = LinesSed(wavels=[9.0], fluxes=[-1e6 * factor], fwhms=[1.0])
+        abs_line = LinesSed(wavels=[9.0], fluxes=[-1e4 * factor], fwhms=[1.0])
 
         Point1.set_SED(bb)
         Point2.set_SED(lines)
@@ -244,16 +237,18 @@ class LRSSlitlessDemoData():
         """
         replace the integrations in the full array with the int arrays
         """
-        my_output_file = glob.glob(os.path.join(dir, 'det_images', '*.fits'))[0]
-        out_dm = datamodels.open(my_output_file)
+        my_output_files = glob.glob(os.path.join(dir, 'det_images', '*.fits'))
 
-        for n, i in enumerate(int_dirs):
-            my_int_file = glob.glob(os.path.join(i, 'det_images', '*.fits'))[0]
-            int_dm = datamodels.open(my_int_file)
+        for f in my_output_files:
+            out_dm = datamodels.open(f)
 
-            out_dm.data[:, :, :, n] = int_dm.data
+            for n, i in enumerate(int_dirs):
+                my_int_file = glob.glob(os.path.join(i, 'det_images', '*.fits'))[0]
+                int_dm = datamodels.open(my_int_file)
 
-        out_dm.save(my_output_file)
+                out_dm.data[n] = int_dm.data
+
+            out_dm.save(f)
 
 
     def run(self):
@@ -262,7 +257,7 @@ class LRSSlitlessDemoData():
         """
         # simulate the ints
         factors1 = np.arange(10)
-        factors2 = np.flipud(factors1[0:-1])
+        factors2 = np.flipud(factors1)
         factors = np.concatenate((factors1, factors2))
 
 
@@ -317,19 +312,17 @@ class MRSDemoData():
         # set background
         background = Background(level= 'low',gradient=5.,pa=15.0,centreFOV=(0., 0.))
 
-        # set SED
-        SED1 = BBSed(Temp=500., wref=8., flux=1.e4)
-        Point1 = Point(Cen=(0.,0.), vel=0.0)
+        # set PL SED
+        SED1 = PLSed(alpha=0.0, wref=10., flux=1.e4)
+        Point1 = Point(Cen=(0., 0.), vel=0.0)
         Point1.set_SED(SED1)
 
-        # set source type and assign SED
-        Point2 = Point(Cen=(0.,0.), vel=0.0)
-        SED2 = LinesSed(wavels=[5,5.4,5.8,6.4,6.7,7.3,7.7,8.4,9,10.1,10.9,11.4,12.4,13.1,14.3,
-                    15.1,16.4,17.2,18.7,19.4,22.4,23.1,25.2,26.7], fluxes=[1e+03,1e+03,1e+03,
-                    1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,1e+03,
-                    1e+03,1e+03,1e+04,1e+04,1e+04,1e+04,1e+04,1e+04,1e+04], fwhms=[0.003,0.003,
-                    0.03,0.003,0.03,0.003,0.03,0.001,0.01,0.001,0.007,0.03,0.001,0.006,0.002,0.009,
-                    0.1,0.005,0.001,0.04,0.001,0.006,0.001,0.001])
+        Point2 = Point(Cen=(0., 0.), vel=0.0)
+        SED2 = LinesSed(wavels=[5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+                        fluxes=[5e+03, 4e+03, 3e+03, 2e+03, 2e+03, 1e+03, 1e+03, 9e+02, 8e+02, 7e+02, 6e+02, 5e+02,
+                                4e+02, 3e+02, 3e+02, 3e+02, 3e+02, 2e+02, 2e+02, 2e+02, 2e+02],
+                        fwhms=[0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05,
+                               0.05, 0.05, 0.05, 0.05, 0.05, 0.05, ])
         Point2.set_SED(SED2)
 
         # load point to targets list
