@@ -431,7 +431,7 @@ def get_output_product(product, channel=None, dither=False):
 def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_readmodes=False,
                  mrs=False, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
                  mrs_readmodes=False, lrs_slit=False, lrs_slitless=False, lrs_readmodes=False,
-                 dither=False, scene='point'):
+                 dither=False, scene='point', noise=True):
     """
     Run functional tests on MIRISim based on user supplied options.
 
@@ -481,6 +481,8 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
         scene               --  specifies the type of scene. Options are
                                 'simple' (single source) and 'grid' (grid of sources)
 
+        noise               --  include noise (poissson/read/cosmic rays)
+
     Returns:
         A folder named 'mirisim_functional_testing' containing simulation
         output, the testing log file test_MIRISim.log, and the simulation_plots
@@ -516,7 +518,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
     testing_logger.addHandler(handler)
 
     # generate the default simultor config object
-    simulator_cfg = make_simulator_config(noise=False)
+    simulator_cfg = make_simulator_config(noise=noise)
 
     # imager simulations
     if imager == True:
@@ -979,4 +981,4 @@ if __name__ == "__main__":
     break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_readmodes=True,
                  mrs=False, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
                  mrs_readmodes=True, lrs_slit=False, lrs_slitless=True, lrs_readmodes=True,
-                 dither=True, scene='point')
+                 dither=True, scene='point', noise=False)
