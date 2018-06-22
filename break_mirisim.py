@@ -121,6 +121,29 @@ def make_lrs_sim_config(mode='SLIT', dither=False, ndither=2, filter='P750L',
     return sim_config
 
 
+def make_simulator_config(noise=True):
+    mrs_simulator_config = SimulatorConfig.from_default()
+    mrs_simulator_config['SCASim']['include_refpix'] = 'T'
+    mrs_simulator_config['SCASim']['include_badpix'] = 'T'
+    mrs_simulator_config['SCASim']['include_dark'] = 'T'
+    mrs_simulator_config['SCASim']['include_flat'] = 'T'
+    mrs_simulator_config['SCASim']['include_gain'] = 'T'
+    mrs_simulator_config['SCASim']['include_nonlinearity'] = 'T'
+    mrs_simulator_config['SCASim']['include_drifts'] = 'T'
+    mrs_simulator_config['SCASim']['include_latency'] = 'T'
+
+    if not noise:
+        mrs_simulator_config['SCASim']['cosmic_ray_mode'] = 'NONE'
+        mrs_simulator_config['SCASim']['include_poisson'] = 'F'
+        mrs_simulator_config['SCASim']['include_readnoise'] = 'F'
+    else:
+        mrs_simulator_config['SCASim']['cosmic_ray_mode'] = 'SOLAR_MIN'
+        mrs_simulator_config['SCASim']['include_poisson'] = 'T'
+        mrs_simulator_config['SCASim']['include_readnoise'] = 'T'
+
+    return mrs_simulator_config
+
+
 def make_scene_config(sky='simple', instrument='IMA', src_type='point'):
     """
     Make a scene config object. Only makes specific types of scenes.
@@ -493,7 +516,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
     testing_logger.addHandler(handler)
 
     # generate the default simultor config object
-    simulator_cfg = SimulatorConfig.from_default()
+    simulator_cfg = make_simulator_config(noise=False)
 
     # imager simulations
     if imager == True:
