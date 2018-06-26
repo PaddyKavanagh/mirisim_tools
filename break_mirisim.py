@@ -121,29 +121,6 @@ def make_lrs_sim_config(mode='SLIT', dither=False, ndither=2, filter='P750L',
     return sim_config
 
 
-def make_simulator_config(noise=True):
-    mrs_simulator_config = SimulatorConfig.from_default()
-    mrs_simulator_config['SCASim']['include_refpix'] = 'T'
-    mrs_simulator_config['SCASim']['include_badpix'] = 'T'
-    mrs_simulator_config['SCASim']['include_dark'] = 'T'
-    mrs_simulator_config['SCASim']['include_flat'] = 'T'
-    mrs_simulator_config['SCASim']['include_gain'] = 'T'
-    mrs_simulator_config['SCASim']['include_nonlinearity'] = 'T'
-    mrs_simulator_config['SCASim']['include_drifts'] = 'T'
-    mrs_simulator_config['SCASim']['include_latency'] = 'T'
-
-    if not noise:
-        mrs_simulator_config['SCASim']['cosmic_ray_mode'] = 'NONE'
-        mrs_simulator_config['SCASim']['include_poisson'] = 'F'
-        mrs_simulator_config['SCASim']['include_readnoise'] = 'F'
-    else:
-        mrs_simulator_config['SCASim']['cosmic_ray_mode'] = 'SOLAR_MIN'
-        mrs_simulator_config['SCASim']['include_poisson'] = 'T'
-        mrs_simulator_config['SCASim']['include_readnoise'] = 'T'
-
-    return mrs_simulator_config
-
-
 def make_scene_config(sky='simple', instrument='IMA', src_type='point'):
     """
     Make a scene config object. Only makes specific types of scenes.
@@ -431,7 +408,7 @@ def get_output_product(product, channel=None, dither=False):
 def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_readmodes=False,
                  mrs=False, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
                  mrs_readmodes=False, lrs_slit=False, lrs_slitless=False, lrs_readmodes=False,
-                 dither=False, scene='point', noise=True):
+                 dither=False, scene='point'):
     """
     Run functional tests on MIRISim based on user supplied options.
 
@@ -481,8 +458,6 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
         scene               --  specifies the type of scene. Options are
                                 'simple' (single source) and 'grid' (grid of sources)
 
-        noise               --  include noise (poissson/read/cosmic rays)
-
     Returns:
         A folder named 'mirisim_functional_testing' containing simulation
         output, the testing log file test_MIRISim.log, and the simulation_plots
@@ -518,7 +493,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
     testing_logger.addHandler(handler)
 
     # generate the default simultor config object
-    simulator_cfg = make_simulator_config(noise=noise)
+    simulator_cfg = SimulatorConfig.from_default()
 
     # imager simulations
     if imager == True:
@@ -534,7 +509,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
                           'F1550C', 'F2300C', 'F2550WR']
         else: im_filters = ['F1130W']  # set as default
 
-        if ima_readmodes == True:
+        if ima_readmodes == True and len(modes) == 1:
             read_modes = ['FAST', 'SLOW']
         else: read_modes = ['FAST']  # set as default
 
@@ -644,7 +619,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 
         if mrs_detectors == True:
             detectors = ['SW', 'LW', 'BOTH']
-        else: detectors = ['SW']  # set as default
+        else: detectors = ['BOTH']  # set as default
 
         if mrs_readmodes == True:
             read_modes = ['FAST', 'SLOW']
@@ -794,7 +769,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 
         if lrs_readmodes == True:
             read_modes = ['FAST', 'SLOW']
-        else: read_modes = ['SLOW']  # set as default
+        else: read_modes = ['FAST']  # set as default
 
         # set observation parameters (hardcoded for now)
         ndither = 2
@@ -896,9 +871,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 
         lrs_filters = ['P750L']  # only 1 available
 
-        if lrs_readmodes == True:
-            read_modes = ['FAST', 'SLOW']
-        else: read_modes = ['SLOW']  # set as default
+        read_modes = ['FAST']  # set as default
 
         # set observation parameters (hardcoded for now)
         ndither = 1
@@ -978,7 +951,7 @@ def break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_read
 if __name__ == "__main__":
 
     #TODO add command line parser
-    break_mirisim(imager=False, ima_filters=False, ima_subarrays=False, ima_readmodes=True,
-                 mrs=False, mrs_paths=False, mrs_gratings=False, mrs_detectors=False,
-                 mrs_readmodes=True, lrs_slit=False, lrs_slitless=True, lrs_readmodes=True,
-                 dither=True, scene='point', noise=False)
+    break_mirisim(imager=True, ima_filters=False, ima_subarrays=True, ima_readmodes=True,
+                 mrs=False, mrs_paths=False, mrs_gratings=True, mrs_detectors=False,
+                 mrs_readmodes=True, lrs_slit=True, lrs_slitless=True, lrs_readmodes=False,
+                 dither=True, scene='point')
