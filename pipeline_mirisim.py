@@ -103,8 +103,10 @@ def pipeline_mirisim(input_dir):
                 with datamodels.open(f) as level1b_dm:
 
                         try:
-                            level2a_dm = Detector1Pipeline.call(level1b_dm, save_results=True)
-                            Image2Pipeline.call(level2a_dm, save_results=True)
+                            level2a_dm = Detector1Pipeline.call(level1b_dm, output_use_model=True, save_results=True,
+                                                                steps={'ipc': {'skip': True}})
+                            level2a_dm.meta.wcsinfo.wcsaxes = 2
+                            Image2Pipeline.call(level2a_dm, save_results=True, output_use_model=True)
 
                             # log pass
                             testing_logger.info('%s levels 1 and 2 passed' % sim_name)
@@ -122,7 +124,7 @@ def pipeline_mirisim(input_dir):
                     call(["asn_from_list", "-o", "IMA_asn.json"] + level2B_files + ["--product-name", "dither"])
                     dm_3_container = datamodels.ModelContainer("IMA_asn.json")
                     Image3Pipeline.call(dm_3_container, save_results=True,
-                                        steps={'tweakreg': {'skip': True}, 'tweakreg_catalog': {'skip': True}})
+                                        steps={'tweakreg': {'skip': True}})
 
                     # log pass
                     testing_logger.info('%s level 3 passed' % sim_name)
@@ -191,7 +193,8 @@ def pipeline_mirisim(input_dir):
                 with datamodels.open(f) as level1b_dm:
 
                     try:
-                        level2a_dm = Detector1Pipeline.call(level1b_dm, save_results=True)
+                        level2a_dm = Detector1Pipeline.call(level1b_dm, output_use_model=True, save_results=True,
+                                                                steps={'ipc': {'skip': True}})
                         Spec2Pipeline.call(level2a_dm, save_results=True, steps={'straylight':{'skip':True},
                                                                                   'extract_1d':{'save_results':True}})
 
@@ -307,7 +310,8 @@ def pipeline_mirisim(input_dir):
                 with datamodels.open(f) as level1b_dm:
 
                     try:
-                        level2a_dm = Detector1Pipeline.call(level1b_dm, save_results=True)
+                        level2a_dm = Detector1Pipeline.call(level1b_dm, output_use_model=True, save_results=True,
+                                                                steps={'ipc': {'skip': True}})
                         Spec2Pipeline.call(level2a_dm, save_results=True, steps={'extract_1d': {'save_results': True}})
 
                         # log pass
@@ -376,7 +380,11 @@ def pipeline_mirisim(input_dir):
                 #    level1b_dm.meta.subarray.name = 'SUBPRISM'
 
                 try:
-                    Detector1Pipeline.call(level1b_dm)
+                    # fix subarray name problem
+                    level1b_dm.meta.subarray.name = 'SUBPRISM'
+
+                    Detector1Pipeline.call(level1b_dm, output_use_model=True, save_results=True,
+                                           steps={'ipc': {'skip': True}, 'lastframe': {'skip': True}})
                     level2a_ints = glob.glob('*rateints.fits')[0]
                     Spec2Pipeline.call(level2a_ints, save_results=True, steps={'extract_1d': {'save_results': True}})
                     level2b_ints = glob.glob('*calints.fits')[0]
@@ -436,7 +444,7 @@ def pipeline_mirisim(input_dir):
 
                     if level3_check == True:
 
-                        my_lightcurve = 'tso_whtlt.ecsv'
+                        my_lightcurve = glob.glob('*.ecsv')[0]
                         lightcurve_data = Table.read(my_lightcurve, format='ascii.ecsv')
 
                         fig, axs = plt.subplots(1, 1, figsize=(10, 8))
